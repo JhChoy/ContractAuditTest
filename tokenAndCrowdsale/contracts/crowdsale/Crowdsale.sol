@@ -20,6 +20,10 @@ contract Crowdsale is Ownable{
     address mTeamWallet;
     STATE mCurrentState = STATE.PREPARE;
 
+    mapping(address => uint) public mContributors;
+
+    event TokenPurchase(address indexed _purchaser, address indexed _receiver, uint _tokens);
+
     modifier period(STATE _state){
         require(mCurrentState == _state);
         _;
@@ -35,13 +39,18 @@ contract Crowdsale is Ownable{
     }
 
     function activeSale() public period(STATE.PREPARE) {
+        require(mToken.balanceOf(address(this)) == mToken.totalSupply());
         mCurrentState = STATE.ACTIVE;
     }
+    function _finishSale() private period(STATE.ACTIVE){
+        mCurrentState = STATE.FINISH;
+    }
     function finalizeSale() public period(STATE.FINISH){
+        _finalize();
         mCurrentState = STATE.FINALIZE;
     }
     function activeRefund() public period(STATE.ACTIVE){
-        require(now>END_TIME);
+        require(now > END_TIME);
         require(address(this).balance < SOFT_CAP);
         mCurrentState = STATE.REFUND;
     }
@@ -55,14 +64,33 @@ contract Crowdsale is Ownable{
         require(msg.value > 0);
         require(now > START_TIME && now < END_TIME);
         uint amount = msg.value;
+        uint tokens = 0;
         if(address(this).balance.add(amount) > HARD_CAP){
             //should pay back left ethers
             uint changes = amount.sub(address(this).balance.add(amount).sub(HARD_CAP));
             msg.sender.transfer(changes);
-            mToken.transfer(_receiver, rate.mul(amount.sub(changes)));
-            //finalize Fund
+            tokens = rate.mul(amount.sub(changes));
+            mToken.transfer(_receiver, tokens);
+            emit TokenPurchase(msg.sender, _receiver, tokens);
+            _addContributors(_receiver, tokens);
+            _finishSale();
         }
-        mToken.transfer(_receiver, rate.mul(amount));
+        tokens = rate.mul(amount);
+        mToken.transfer(_receiver, tokens);
+        emit TokenPurchase(msg.sender, _receiver, tokens);
+        _addContributors(_receiver, tokens);
+    }
+
+    function _addContributors(address _contributor, uint _additionalToken) private {
+        if(mContributors[_contributor] > 0) {
+            mContributors[_contributor] = mContributors[_contributor].add(_additionalToken);
+        } else {
+            mContributors[_contributor] = _additionalToken;
+        }
+    }
+    function _finalize() private period(STATE.FINISH){
+        mTeamWallet.transfer(address(this).balance);
+        mToken.transfer(mTeamWallet, mToken.balanceOf(address(this)));
     }
 
     function refund() public period(STATE.REFUND){
