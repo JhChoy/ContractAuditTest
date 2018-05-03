@@ -38,12 +38,14 @@ contract Crowdsale is Ownable{
         mTeamWallet = _teamWallet;
     }
 
-    function activeSale() public period(STATE.PREPARE) {
+    function activeSale() public onlyOwner period(STATE.PREPARE) {
         require(mToken.balanceOf(address(this)) == mToken.totalSupply());
         mCurrentState = STATE.ACTIVE;
     }
-    function _finishSale() private period(STATE.ACTIVE){
-        mCurrentState = STATE.FINISH;
+    function finishSale() public onlyOwner period(STATE.ACTIVE){
+        require(now >= END_TIME);
+        require(address(this).balance > SOFT_CAP);
+        _finish();
     }
     function finalizeSale() public period(STATE.FINISH){
         _finalize();
@@ -72,7 +74,7 @@ contract Crowdsale is Ownable{
             tokens = rate.mul(amount.sub(changes));
             emit TokenPurchase(msg.sender, _receiver, tokens);
             _addContributors(_receiver, tokens);
-            _finishSale();
+            _finish();
         }
         tokens = rate.mul(amount);
         emit TokenPurchase(msg.sender, _receiver, tokens);
@@ -86,7 +88,11 @@ contract Crowdsale is Ownable{
             mContributors[_contributor] = _additionalToken;
         }
     }
-    function _finalize() private period(STATE.FINISH){
+    
+    function _finish() private period(STATE.ACTIVE){
+        mCurrentState = STATE.FINISH;
+    }
+    function _finalize() private{
         mTeamWallet.transfer(address(this).balance);
         mToken.transfer(mTeamWallet, mToken.balanceOf(address(this)));
     }
