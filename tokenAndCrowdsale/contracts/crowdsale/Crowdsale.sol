@@ -70,13 +70,11 @@ contract Crowdsale is Ownable{
             uint changes = amount.sub(address(this).balance.add(amount).sub(HARD_CAP));
             msg.sender.transfer(changes);
             tokens = rate.mul(amount.sub(changes));
-            mToken.transfer(_receiver, tokens);
             emit TokenPurchase(msg.sender, _receiver, tokens);
             _addContributors(_receiver, tokens);
             _finishSale();
         }
         tokens = rate.mul(amount);
-        mToken.transfer(_receiver, tokens);
         emit TokenPurchase(msg.sender, _receiver, tokens);
         _addContributors(_receiver, tokens);
     }
@@ -93,9 +91,17 @@ contract Crowdsale is Ownable{
         mToken.transfer(mTeamWallet, mToken.balanceOf(address(this)));
     }
 
+
+    function receiveTokens() public period(STATE.FINALIZE){
+        require(mContributors[msg.sender] > 0);
+        mToken.transfer(msg.sender, mContributors[msg.sender]);
+        delete mContributors[msg.sender];
+    }
+
     function refund() public period(STATE.REFUND){
-        uint balance = mToken.balanceOf(msg.sender);
-        require(balance > 0);
+        require(mContributors[msg.sender] > 0);
+        msg.sender.transfer(mContributors[msg.sender].div(rate));
+        delete mContributors[msg.sender];
     }
 
 }
