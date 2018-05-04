@@ -18,8 +18,8 @@ contract ERC20 is IERC20 {
         require(_to != address(0));
         require(balances[msg.sender] >= _value);
 
-        balances[msg.sender] = balances[msg.sender].safeSub(_value);
-        balances[_to] = balances[_to].safeAdd(_value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
         emit Transfer(msg.sender, _to, _value);
         return true;
     }
@@ -28,9 +28,9 @@ contract ERC20 is IERC20 {
         require(_to != address(0));
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
 
-        balances[_to] = balances[_to].safeAdd(_value);
-        balances[_from] = balances[_from].safeSub(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].safeSub(_value);
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         emit Transfer(_from, _to, _value);
         return true;
     }
