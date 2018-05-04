@@ -10,5 +10,5 @@ module.exports = async function(deployer, network, accounts){
 
     const _token = await JChoyToken.deployed();
     const _teamWallet = accounts[1];
-    deployer.deploy(Crowdsale, _token, _teamWallet, {from: accounts[0], gasLimit: 50000000});
+    deployer.deploy(Crowdsale, _token.address, _teamWallet, {from: accounts[0], gasLimit: 50000000});
 }

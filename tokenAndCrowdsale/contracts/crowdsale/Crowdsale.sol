@@ -8,7 +8,7 @@ contract Crowdsale is Ownable{
 
     using SafeMath for uint256;
 
-    enum STATE {PREPARE, ACTIVE, FINISH, FINALIZE, REFUND}
+    enum STATE {PREPARE, ACTIVE, FINISHED, FINALIZED, REFUND}
 
     uint public constant rate = 10 * 1000;
     uint public constant HARD_CAP = 1000 ether;
@@ -16,8 +16,8 @@ contract Crowdsale is Ownable{
     uint public constant START_TIME = 1525824000000; // UTC 2018 May 8th Tuesday PM 3:00:00
     uint public constant END_TIME = 1526036400000; // UTC 2018 May 11st Friday AM 2:00:00
 
-    IERC20 mToken;
-    address mTeamWallet;
+    IERC20 public mToken;
+    address public mTeamWallet;
     STATE mCurrentState = STATE.PREPARE;
 
     mapping(address => uint) public mContributors;
@@ -37,6 +37,20 @@ contract Crowdsale is Ownable{
         mToken = IERC20(_tokenAddress);
         mTeamWallet = _teamWallet;
     }
+    function getCurrentSate() view external returns(string){
+        if(mCurrentState == STATE.PREPARE){
+            return "PREPARE";
+        } else if(mCurrentState == STATE.ACTIVE){
+            return "ACTIVE";
+        } else if(mCurrentState == STATE.FINISHED){
+            return "FINISHED";
+        } else if(mCurrentState == STATE.FINALIZED){
+            return "FINALIZED";
+        } else if(mCurrentState == STATE.REFUND){
+            return "REFUND";
+        } else
+            return "SOMETHING WORNG";
+    }
 
     function activeSale() public onlyOwner period(STATE.PREPARE) {
         require(mToken.balanceOf(address(this)) == mToken.totalSupply());
@@ -47,9 +61,9 @@ contract Crowdsale is Ownable{
         require(address(this).balance > SOFT_CAP);
         _finish();
     }
-    function finalizeSale() public period(STATE.FINISH){
+    function finalizeSale() public period(STATE.FINISHED){
         _finalize();
-        mCurrentState = STATE.FINALIZE;
+        mCurrentState = STATE.FINALIZED;
     }
     function activeRefund() public period(STATE.ACTIVE){
         require(now > END_TIME);
@@ -90,7 +104,7 @@ contract Crowdsale is Ownable{
     }
     
     function _finish() private period(STATE.ACTIVE){
-        mCurrentState = STATE.FINISH;
+        mCurrentState = STATE.FINISHED;
     }
     function _finalize() private{
         mTeamWallet.transfer(address(this).balance);
@@ -98,7 +112,7 @@ contract Crowdsale is Ownable{
     }
 
 
-    function receiveTokens() public period(STATE.FINALIZE){
+    function receiveTokens() public period(STATE.FINALIZED){
         require(mContributors[msg.sender] > 0);
         mToken.transfer(msg.sender, mContributors[msg.sender]);
         delete mContributors[msg.sender];
