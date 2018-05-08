@@ -1,3 +1,5 @@
+import { increaseTime, duration } from 'openzeppelin-solidity/test/helpers/increaseTime';
+
 const JChoyToken = artifacts.require("JChoyToken");
 const Crowdsale = artifacts.require("Crowdsale");
 
@@ -36,7 +38,7 @@ contract("Crowdsale", function(accounts){
         console.log(balance.toNumber()/(10 ** decimals))
         await instance.activeSale({from : accounts[0]}).should.be.rejectedWith('revert');
         let leftBalance = await token.balanceOf(accounts[0]);
-        token.transfer(instance.address, leftBalance, {from : accounts[0]});
+        token.transfer(instance.address, leftBalance, {from : accounts[0]}).should.be.fulfilled;
     });
     it("should have same owner with deployer", async () => {
         owner = await instance.owner.call();
@@ -65,4 +67,9 @@ contract("Crowdsale", function(accounts){
         instance.buyTokens(accounts[0], {from : accounts[0], value : web3.toWei(10, 'ether')}).should.be.rejectedWith('revert');
         instance.activeRefund({from : accounts[0]}).should.be.rejectedWith('revert');
     });
+    it("should receive ethers after start time", async () =>{
+        console.log(START_TIME, duration.days(1));
+        // instance.send(web3.toWei(10, 'ether'), {from : accounts[2]}).should.be.fulfilled;
+        // instance.buyTokens(accounts[0], {from : accounts[2], value : web3.toWei(10, 'ether')}).should.be.fulfilled;
+    })
 });

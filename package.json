@@ -11,8 +11,9 @@
     "url": "\u001b[D\u001b[\u001b[C\u001bcontract_audit)"
   },
   "author": "JChoy",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
@@ -21,6 +22,7 @@
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "chai-bignumber": "^2.0.2",
+    "openzeppelin-solidity": "1.9.0",
     "solium": "^1.1.6"
   }
 }
