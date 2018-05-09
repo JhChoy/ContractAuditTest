@@ -84,14 +84,13 @@ contract("Crowdsale", function(accounts){
         instance.buyTokens(accounts[0], {from : accounts[0], value : web3.toWei(5, 'ether')}).should.be.rejectedWith('revert');
     });
     it("should give refund ethers to only contributors once", async () => {
-        for(let i = 0; i < 40; i++){
-            instance.refund({from : accounts[i]}).should.be.fulfilled;
-        }
-        instance.refund({from : accounts[99]}).should.be.rejectedWith('revert');
-        for(let i = 40; i < 99; i++){
-            instance.refund({from : accounts[i]}).should.be.fulfilled;
-        }
-        instance.refund({from : accounts[0]}).should.be.rejectedWith('revert');
+        await (async () => {
+            for(let i = 0; i < 99; i++){
+                instance.refund({from : accounts[i]}).should.be.fulfilled;
+            }
+            instance.refund({from : accounts[99]}).should.be.rejectedWith('revert');
+        })();
+        await instance.refund({from : accounts[0]}).should.be.rejectedWith('revert');
         await advanceBlock();
         let balance = (await web3.eth.getBalance(instance.address)).toNumber();
         assert.equal(balance, 0, balance +'and'+ 0);

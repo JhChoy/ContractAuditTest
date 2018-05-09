@@ -86,14 +86,15 @@ contract Crowdsale is Ownable{
         require(now >= START_TIME && now < END_TIME);
         uint amount = msg.value;
         uint tokens = 0;
-        if(address(this).balance.add(amount) >= HARD_CAP){
+        if(address(this).balance >= HARD_CAP){
             //should pay back left ethers
-            uint changes = amount.sub(address(this).balance.add(amount).sub(HARD_CAP));
+            uint changes = address(this).balance.sub(HARD_CAP);
             msg.sender.transfer(changes);
             tokens = rate.mul(amount.sub(changes));
             emit TokenPurchase(msg.sender, _receiver, tokens);
             _addContributors(_receiver, tokens);
             _finish();
+            return;
         }
         tokens = rate.mul(amount);
         emit TokenPurchase(msg.sender, _receiver, tokens);
