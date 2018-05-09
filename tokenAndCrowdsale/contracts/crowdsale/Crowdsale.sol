@@ -13,14 +13,15 @@ contract Crowdsale is Ownable{
     uint public constant rate = 10 * 1000;
     uint public constant HARD_CAP = 1000 ether;
     uint public constant SOFT_CAP = 500 ether;
-    uint public constant START_TIME = 1525824000000; // UTC 2018 May 8th Tuesday PM 3:00:00
-    uint public constant END_TIME = 1526036400000; // UTC 2018 May 11st Friday AM 2:00:00
+    uint public constant START_TIME = 1525791600000; // UTC 2018 May 8th Tuesday PM 3:00:00
+    uint public constant END_TIME = 1526004000000; // UTC 2018 May 11st Friday AM 2:00:00
 
     IERC20 public mToken;
     address public mTeamWallet;
     STATE mCurrentState = STATE.PREPARE;
 
-    mapping(address => uint) public mContributors;
+    mapping(address => uint) mContributors;
+    uint public mContributedTokens = 0;
 
     event TokenPurchase(address indexed _purchaser, address indexed _receiver, uint _tokens);
 
@@ -51,6 +52,10 @@ contract Crowdsale is Ownable{
         } else
             return "SOMETHING WORNG";
     }
+    function getContributors(address _contributor) view external returns(uint){
+        require(_contributor != address(0));
+        return mContributors[_contributor];
+    }
 
     function activeSale() public onlyOwner period(STATE.PREPARE) {
         require(mToken.balanceOf(address(this)) == mToken.totalSupply());
@@ -58,7 +63,7 @@ contract Crowdsale is Ownable{
     }
     function finishSale() public onlyOwner period(STATE.ACTIVE){
         require(now >= END_TIME);
-        require(address(this).balance > SOFT_CAP);
+        require(address(this).balance >= SOFT_CAP);
         _finish();
     }
     function finalizeSale() public period(STATE.FINISHED){
@@ -66,7 +71,7 @@ contract Crowdsale is Ownable{
         mCurrentState = STATE.FINALIZED;
     }
     function activeRefund() public period(STATE.ACTIVE){
-        require(now > END_TIME);
+        require(now >= END_TIME);
         require(address(this).balance < SOFT_CAP);
         mCurrentState = STATE.REFUND;
     }
@@ -78,10 +83,10 @@ contract Crowdsale is Ownable{
     function buyTokens(address _receiver) payable public period(STATE.ACTIVE){
         require(_receiver != address(0));
         require(msg.value > 0);
-        require(now > START_TIME && now < END_TIME);
+        require(now >= START_TIME && now < END_TIME);
         uint amount = msg.value;
         uint tokens = 0;
-        if(address(this).balance.add(amount) > HARD_CAP){
+        if(address(this).balance.add(amount) >= HARD_CAP){
             //should pay back left ethers
             uint changes = amount.sub(address(this).balance.add(amount).sub(HARD_CAP));
             msg.sender.transfer(changes);
@@ -101,6 +106,7 @@ contract Crowdsale is Ownable{
         } else {
             mContributors[_contributor] = _additionalToken;
         }
+        mContributedTokens += _additionalToken;
     }
     
     function _finish() private period(STATE.ACTIVE){
@@ -108,7 +114,7 @@ contract Crowdsale is Ownable{
     }
     function _finalize() private{
         mTeamWallet.transfer(address(this).balance);
-        mToken.transfer(mTeamWallet, mToken.balanceOf(address(this)));
+        mToken.transfer(mTeamWallet, mToken.balanceOf(address(this)).sub(mContributedTokens));
     }
 
 

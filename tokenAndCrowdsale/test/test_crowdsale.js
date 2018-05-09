@@ -1,4 +1,5 @@
-import { increaseTime, duration } from 'openzeppelin-solidity/test/helpers/increaseTime';
+import { increaseTimeTo, duration } from 'openzeppelin-solidity/test/helpers/increaseTime';
+import { advanceBlock } from 'openzeppelin-solidity/test/helpers/advanceToBlock';
 
 const JChoyToken = artifacts.require("JChoyToken");
 const Crowdsale = artifacts.require("Crowdsale");
@@ -22,6 +23,8 @@ contract("Crowdsale", function(accounts){
     let decimals;
     let owner;
     before(async () => {
+        await advanceBlock();
+
         instance = await Crowdsale.deployed();
         token = await JChoyToken.deployed();
         totalSupply = await token.totalSupply.call();
@@ -68,8 +71,20 @@ contract("Crowdsale", function(accounts){
         instance.activeRefund({from : accounts[0]}).should.be.rejectedWith('revert');
     });
     it("should receive ethers after start time", async () =>{
-        console.log(START_TIME, duration.days(1));
-        // instance.send(web3.toWei(10, 'ether'), {from : accounts[2]}).should.be.fulfilled;
-        // instance.buyTokens(accounts[0], {from : accounts[2], value : web3.toWei(10, 'ether')}).should.be.fulfilled;
-    })
+        increaseTimeTo(START_TIME);
+        instance.sendTransaction({from : accounts[2], value : web3.toWei(1, 'ether')}).should.be.fulfilled;
+        instance.buyTokens(accounts[0], {from : accounts[2], value : web3.toWei(1, 'ether')}).should.be.fulfilled;
+        let tokenBalance0 = await instance.getContributors.call(accounts[0]);
+        let tokenBalance2 = await instance.getContributors.call(accounts[2]);
+        console.log(tokenBalance0.toNumber()/10**decimals, tokenBalance2.toNumber()/10**decimals);//FIX
+    });
+    it("shouldn't active other processes before sale finished", async () =>{
+        instance.activeSale({from : accounts[0]}).should.be.rejectedWith('revert');
+        instance.activeRefund({from : accounts[0]}).should.be.rejectedWith('revert');
+        instance.finalizeSale({from : accounts[0]}).should.be.rejectedWith('revert');
+        instance.finishSale({from : accounts[0]}).should.be.rejectedWith('revert');
+        instance.receiveTokens({from : accounts[0]}).should.be.rejectedWith('revert');
+        instance.refund({from : accounts[0]}).should.be.rejectedWith('revert');
+    });
+    
 });
