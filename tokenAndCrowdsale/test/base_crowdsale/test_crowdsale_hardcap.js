@@ -42,6 +42,11 @@ contract("Crowdsale", function(accounts){
         let balance = await token.balanceOf(accounts[0]);
         token.transfer(instance.address, balance, {from : accounts[0]}).should.be.fulfilled;
     });
+    it("should list users", async () => {
+        for(let i = 2; i<36; i++){
+            instance.addWhitelist(accounts[i], web3.toWei(30, 'ether'));
+        }
+    })
     //receive all tokens
     it("should be activated", async () =>{
         await instance.activeSale({from : accounts[0]});

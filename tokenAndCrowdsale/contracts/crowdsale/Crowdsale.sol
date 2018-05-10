@@ -165,7 +165,7 @@ contract Crowdsale is Ownable{
 
     // private Functions
     function _addContributors(address _contributor, uint _additionalToken) private {
-        mContributors[_contributor] = _additionalToken;
+        mContributors[_contributor] = mContributors[_contributor].add(_additionalToken);
         mContributedTokens += _additionalToken;
     }
     

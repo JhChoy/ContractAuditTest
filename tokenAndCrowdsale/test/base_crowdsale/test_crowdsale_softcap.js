@@ -42,6 +42,11 @@ contract("Crowdsale", function(accounts){
         let balance = await token.balanceOf(accounts[0]);
         token.transfer(instance.address, balance, {from : accounts[0]}).should.be.fulfilled;  
     });
+    it("should list users", async () => {
+        for(let i = 2; i<100; i++){
+            instance.addWhitelist(accounts[i], web3.toWei(30, 'ether'));
+        }
+    })
     //receive all tokens
     it("should be activated", async () =>{
         await instance.activeSale({from : accounts[0]});
@@ -52,7 +57,7 @@ contract("Crowdsale", function(accounts){
             instance.sendTransaction({from : accounts[i], value : web3.toWei(5, 'ether')}).should.be.fulfilled;
         }
         await advanceBlock();
-        // for(let i= 2; i < 98; i++){
+        // for(let i= 2; i < 100; i++){
         //     let balance = await instance.getContributors.call(accounts[i])
         //     assert.equal(balance.toNumber(),
         //                 web3.toWei(5,'ether')*rate,
@@ -65,7 +70,7 @@ contract("Crowdsale", function(accounts){
     });
     //add perfectly
     it("should add additional ether perfectly", async () =>{
-        instance.sendTransaction({from : accounts[3], value : web3.toWei(10, 'ether')}).should.be.fulfilled;
+        await instance.sendTransaction({from : accounts[3], value : web3.toWei(10, 'ether')}).should.be.fulfilled;
         let balance = await instance.getContributors.call(accounts[3])
         assert.equal(balance.toNumber(),
                     web3.toWei(15,'ether')*rate,
@@ -73,7 +78,7 @@ contract("Crowdsale", function(accounts){
     });
     //after soft cap function X called
     it("shouldn't receive ether after end time", async () => {
-        increaseTimeTo(END_TIME);
+        await increaseTimeTo(END_TIME);
         instance.sendTransaction({from : accounts[3], value : web3.toWei(5, 'ether')}).should.be.rejectedWith('revert');
         instance.buyTokens(accounts[0], {from : accounts[0], value : web3.toWei(5, 'ether')}).should.be.rejectedWith('revert');
     });
@@ -117,8 +122,8 @@ contract("Crowdsale", function(accounts){
             for(let i = 2; i < 100; i++){
                 instance.receiveTokens({from : accounts[i]}).should.be.fulfilled;
             }
-            instance.receiveTokens({from : accounts[0]}).should.be.rejectedWith('revert');
         })();
+        await instance.receiveTokens({from : accounts[0]}).should.be.rejectedWith('revert');
         await advanceBlock();
         await instance.receiveTokens({from : accounts[6]}).should.be.rejectedWith('revert'); 
 
