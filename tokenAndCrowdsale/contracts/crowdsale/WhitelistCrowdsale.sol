@@ -4,7 +4,7 @@ import "../math/SafeMath.sol";
 import "../ownership/Ownable.sol";
 import "../token/IERC20.sol";
 
-contract Crowdsale is Ownable{
+contract WhitelistCrowdsale is Ownable{
 
     /* Library */
 
@@ -129,7 +129,7 @@ contract Crowdsale is Ownable{
         require(now >= START_TIME && now < END_TIME);
         require(mWhitelist[_receiver].isListed);
         uint amount = msg.value;
-        require(mWhitelist[_receiver].maxcap >= mContributors[_receiver].add(amount));
+        require(mWhitelist[_receiver].maxcap >= mContributors[_receiver].div(rate).add(amount));
         uint tokens = 0;
         if(address(this).balance >= HARD_CAP){
             //should pay back left ethers
