@@ -15,6 +15,10 @@ contract Crowdsale is Ownable{
 
     enum STATE {PREPARE, ACTIVE, FINISHED, FINALIZED, REFUND}
 
+    struct Whitelist{
+        bool isListed;
+        uint maxcap;
+    }
 
 
     /* Constants */
@@ -33,6 +37,7 @@ contract Crowdsale is Ownable{
     address public mTeamWallet;
     STATE mCurrentState = STATE.PREPARE;
 
+    mapping(address => Whitelist) mWhitelist;
     mapping(address => uint) mContributors;
     uint public mContributedTokens = 0;
 
@@ -83,6 +88,15 @@ contract Crowdsale is Ownable{
         return mContributors[_contributor];
     }
 
+
+    // Set Functions
+    function addWhitelist(address _whitelist, uint _maxcap) public onlyOwner{
+        require(mCurrentState < STATE.FINISHED);
+        mWhitelist[_whitelist].isListed = true;
+        mWhitelist[_whitelist].maxcap = _maxcap;
+    }
+
+
     // State Functions
     function activeSale() public onlyOwner period(STATE.PREPARE) {
         require(mToken.balanceOf(address(this)) == mToken.totalSupply());
@@ -113,7 +127,9 @@ contract Crowdsale is Ownable{
         require(_receiver != address(0));
         require(msg.value > 0);
         require(now >= START_TIME && now < END_TIME);
+        require(mWhitelist[_receiver].isListed);
         uint amount = msg.value;
+        require(mWhitelist[_receiver].maxcap >= mContributors[_receiver].add(amount));
         uint tokens = 0;
         if(address(this).balance >= HARD_CAP){
             //should pay back left ethers

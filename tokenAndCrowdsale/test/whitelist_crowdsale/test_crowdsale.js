@@ -2,7 +2,7 @@ import { increaseTimeTo, duration } from 'openzeppelin-solidity/test/helpers/inc
 import { advanceBlock } from 'openzeppelin-solidity/test/helpers/advanceToBlock';
 
 const JChoyToken = artifacts.require("JChoyToken");
-const Crowdsale = artifacts.require("Crowdsale");
+const WhitelistCrowdsale = artifacts.require("WhitelistCrowdsale");
 
 const BigNumber = web3.BigNumber;
 
@@ -11,7 +11,7 @@ require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .should();
 
-contract("Crowdsale", function(accounts){
+contract("WhitelistCrowdsale", function(accounts){
     let instance ;
     let token ;
     let rate ;
@@ -25,7 +25,7 @@ contract("Crowdsale", function(accounts){
     before(async () => {
         await advanceBlock();
 
-        instance = await Crowdsale.deployed();
+        instance = await WhitelistCrowdsale.deployed();
         token = await JChoyToken.deployed();
         totalSupply = await token.totalSupply.call();
         decimals = await token.decimals.call();
@@ -56,6 +56,11 @@ contract("Crowdsale", function(accounts){
         instance.activeSale({from : accounts[1]}).should.be.rejectedWith('revert');
         
     });
+    it("should add whitelist", async () =>{
+        //just accounts[0] and accounts[2]
+        instance.addWhitelist(accounts[0], web3.toWei(10, 'ether')).should.be.fulfilled;
+        instance.addWhitelist(accounts[2], web3.toWei(5, 'ether')).should.be.fulfilled;
+    });
     it("shouldn't active other processes before start time even if state is ACTIVE", async () => {
         let state = await instance.getCurrentSate.call();
         assert.equal(state, "PREPARE", "state isn't PREPARE");
@@ -70,10 +75,13 @@ contract("Crowdsale", function(accounts){
         instance.buyTokens(accounts[0], {from : accounts[0], value : web3.toWei(10, 'ether')}).should.be.rejectedWith('revert');
         instance.activeRefund({from : accounts[0]}).should.be.rejectedWith('revert');
     });
-    it("should receive ethers after start time", async () =>{
-        increaseTimeTo(START_TIME);
-        instance.sendTransaction({from : accounts[2], value : web3.toWei(1, 'ether')}).should.be.fulfilled;
+    it("should receive ethers of listed people after start time", async () =>{
+        await increaseTimeTo(START_TIME);
+        await instance.sendTransaction({from : accounts[2], value : web3.toWei(1, 'ether')}).should.be.fulfilled;
         instance.buyTokens(accounts[0], {from : accounts[2], value : web3.toWei(1, 'ether')}).should.be.fulfilled;
+        instance.sendTransaction({from : accounts[4], value : web3.toWei(1, 'ether')}).should.be.rejectedWith('revert');
+        instance.sendTransaction({from : accounts[2], value : web3.toWei(10, 'ether')}).should.be.rejectedWith('revert');
+
         let tokenBalance0 = await instance.getContributors.call(accounts[0]);
         let tokenBalance2 = await instance.getContributors.call(accounts[2]);
         console.log(tokenBalance0.toNumber()/10**decimals, tokenBalance2.toNumber()/10**decimals);//FIX

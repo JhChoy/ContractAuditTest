@@ -2,7 +2,7 @@ import { increaseTimeTo, duration } from 'openzeppelin-solidity/test/helpers/inc
 import { advanceBlock } from 'openzeppelin-solidity/test/helpers/advanceToBlock';
 
 const JChoyToken = artifacts.require("JChoyToken");
-const Crowdsale = artifacts.require("Crowdsale");
+const WhitelistCrowdsale = artifacts.require("WhitelistCrowdsale");
 
 const BigNumber = web3.BigNumber;
 
@@ -11,7 +11,7 @@ require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .should();
 
-contract("Crowdsale", function(accounts){
+contract("WhitelistCrowdsale", function(accounts){
     let instance ;
     let token ;
     let rate ;
@@ -24,7 +24,7 @@ contract("Crowdsale", function(accounts){
     let owner;
     before(async () => {
 
-        instance = await Crowdsale.deployed();
+        instance = await WhitelistCrowdsale.deployed();
         token = await JChoyToken.deployed();
         totalSupply = await token.totalSupply.call();
         decimals = await token.decimals.call();
@@ -37,6 +37,11 @@ contract("Crowdsale", function(accounts){
         let balance = await token.balanceOf(accounts[0]);
         token.transfer(instance.address, balance, {from : accounts[0]}).should.be.fulfilled;
     });
+    it("should list users", async () => {
+        for(let i = 0; i<99; i++){
+            instance.addWhitelist(accounts[i], web3.toWei(30, 'ether'));
+        }
+    })
     it("should be activated", async () =>{
         await instance.activeSale({from : accounts[0]});
         increaseTimeTo(START_TIME);
@@ -58,7 +63,7 @@ contract("Crowdsale", function(accounts){
         assert.equal(balance, web3.toWei(5*99, 'ether'),balance +'and'+ web3.toWei(5*99, 'ether'));
     });
     it("shouldn't receive ether after end time", async () => {
-        increaseTimeTo(END_TIME);
+        await increaseTimeTo(END_TIME);
         instance.sendTransaction({from : accounts[3], value : web3.toWei(5, 'ether')}).should.be.rejectedWith('revert');
         instance.buyTokens(accounts[0], {from : accounts[0], value : web3.toWei(5, 'ether')}).should.be.rejectedWith('revert');
     });
