@@ -37,8 +37,8 @@ contract WhitelistCrowdsale is Ownable{
     address public mTeamWallet;
     STATE mCurrentState = STATE.PREPARE;
 
-    mapping(address => Whitelist) mWhitelist;
-    mapping(address => uint) mContributors;
+    mapping(address => Whitelist) public mWhitelist;
+    mapping(address => uint) public mContributors;
     uint public mContributedTokens = 0;
 
 
@@ -82,10 +82,6 @@ contract WhitelistCrowdsale is Ownable{
             return "REFUND";
         } else
             return "SOMETHING WORNG";
-    }
-    function getContributors(address _contributor) view external returns(uint){
-        require(_contributor != address(0));
-        return mContributors[_contributor];
     }
 
 

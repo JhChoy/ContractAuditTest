@@ -7,9 +7,9 @@ const Crowdsale = artifacts.require("Crowdsale");
 const BigNumber = web3.BigNumber;
 
 require('chai')
-  .use(require('chai-as-promised'))
-  .use(require('chai-bignumber')(BigNumber))
-  .should();
+    .use(require('chai-as-promised'))
+    .use(require('chai-bignumber')(BigNumber))
+    .should();
 
 contract("Crowdsale", function(accounts){
     let instance ;

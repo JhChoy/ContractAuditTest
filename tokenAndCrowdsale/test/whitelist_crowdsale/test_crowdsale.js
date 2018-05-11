@@ -7,9 +7,9 @@ const WhitelistCrowdsale = artifacts.require("WhitelistCrowdsale");
 const BigNumber = web3.BigNumber;
 
 require('chai')
-  .use(require('chai-as-promised'))
-  .use(require('chai-bignumber')(BigNumber))
-  .should();
+    .use(require('chai-as-promised'))
+    .use(require('chai-bignumber')(BigNumber))
+    .should();
 
 contract("WhitelistCrowdsale", function(accounts){
     let instance ;
@@ -61,6 +61,10 @@ contract("WhitelistCrowdsale", function(accounts){
         instance.addWhitelist(accounts[0], web3.toWei(10, 'ether')).should.be.fulfilled;
         instance.addWhitelist(accounts[2], web3.toWei(5, 'ether')).should.be.fulfilled;
     });
+    it("should check whitelist", async () =>{
+        let whitelist = await instance.mWhitelist.call(accounts[0]);
+        assert.equal(whitelist[0], true);
+    })
     it("shouldn't active other processes before start time even if state is ACTIVE", async () => {
         let state = await instance.getCurrentSate.call();
         assert.equal(state, "PREPARE", "state isn't PREPARE");
@@ -82,8 +86,8 @@ contract("WhitelistCrowdsale", function(accounts){
         instance.sendTransaction({from : accounts[4], value : web3.toWei(1, 'ether')}).should.be.rejectedWith('revert');
         instance.sendTransaction({from : accounts[2], value : web3.toWei(10, 'ether')}).should.be.rejectedWith('revert');
 
-        let tokenBalance0 = await instance.getContributors.call(accounts[0]);
-        let tokenBalance2 = await instance.getContributors.call(accounts[2]);
+        let tokenBalance0 = await instance.mContributors.call(accounts[0]);
+        let tokenBalance2 = await instance.mContributors.call(accounts[2]);
         console.log(tokenBalance0.toNumber()/10**decimals, tokenBalance2.toNumber()/10**decimals);//FIX
     });
     it("shouldn't active other processes before sale finished", async () =>{

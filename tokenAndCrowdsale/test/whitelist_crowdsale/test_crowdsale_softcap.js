@@ -7,9 +7,9 @@ const WhitelistCrowdsale = artifacts.require("WhitelistCrowdsale");
 const BigNumber = web3.BigNumber;
 
 require('chai')
-  .use(require('chai-as-promised'))
-  .use(require('chai-bignumber')(BigNumber))
-  .should();
+    .use(require('chai-as-promised'))
+    .use(require('chai-bignumber')(BigNumber))
+    .should();
 
 contract("WhitelistCrowdsale", function(accounts){
     let instance ;
@@ -58,7 +58,7 @@ contract("WhitelistCrowdsale", function(accounts){
         }
         await advanceBlock();
         // for(let i= 2; i < 100; i++){
-        //     let balance = await instance.getContributors.call(accounts[i])
+        //     let balance = await instance.mContributors.call(accounts[i])
         //     assert.equal(balance.toNumber(),
         //                 web3.toWei(5,'ether')*rate,
         //                 balance.toNumber() +"is not equal to"+web3.toWei(5,'ether')*rate);
@@ -71,7 +71,7 @@ contract("WhitelistCrowdsale", function(accounts){
     //add perfectly
     it("should add additional ether perfectly", async () =>{
         await instance.sendTransaction({from : accounts[3], value : web3.toWei(10, 'ether')}).should.be.fulfilled;
-        let balance = await instance.getContributors.call(accounts[3])
+        let balance = await instance.mContributors.call(accounts[3])
         assert.equal(balance.toNumber(),
                     web3.toWei(15,'ether')*rate,
                     balance.toNumber() +"is not equal to"+web3.toWei(15,'ether')*rate);

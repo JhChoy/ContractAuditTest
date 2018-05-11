@@ -7,9 +7,9 @@ const WhitelistCrowdsale = artifacts.require("WhitelistCrowdsale");
 const BigNumber = web3.BigNumber;
 
 require('chai')
-  .use(require('chai-as-promised'))
-  .use(require('chai-bignumber')(BigNumber))
-  .should();
+    .use(require('chai-as-promised'))
+    .use(require('chai-bignumber')(BigNumber))
+    .should();
 
 contract("WhitelistCrowdsale", function(accounts){
     let instance ;
@@ -52,7 +52,7 @@ contract("WhitelistCrowdsale", function(accounts){
         }
         await advanceBlock();
         // for(let i= 0; i < 99; i++){
-        //     let balance = await instance.getContributors.call(accounts[i])
+        //     let balance = await instance.mContributors.call(accounts[i])
         //     assert.equal(balance.toNumber(),
         //                 web3.toWei(5,'ether')*rate,
         //                 balance.toNumber() +"is not equal to"+web3.toWei(5,'ether')*rate);
